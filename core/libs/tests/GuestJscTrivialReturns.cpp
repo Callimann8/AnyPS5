@@ -2,6 +2,7 @@
 #include "prx/libc/include/general/VabiMacros.hpp"
 
 #include <array>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
@@ -42,4 +43,10 @@ int main() {
     RequireUnchanged(agent);
     RequireUnchanged(router);
     RequireUnchanged(dispatcher);
+
+    _ZN3JSC22resetSuperSamplerStateEv();
+    for (const std::uint64_t value : {0x0ull, 0x2ull, 0x6ull, 0x7ull, 0xaull, 0xfffe00000000002aull, 0x00007f0012345670ull}) {
+        if (_ZN3JSC14setNeverInlineENS_7JSValueE(value) != 0xa) std::abort();
+        if (_ZN3JSC16setNeverOptimizeENS_7JSValueE(value) != 0xa) std::abort();
+    }
 }

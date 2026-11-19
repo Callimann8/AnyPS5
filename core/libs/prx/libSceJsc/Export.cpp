@@ -314,9 +314,7 @@ int APS5_VABI _ZN9Inspector8Protocol16InspectorHelpers24parseEnumValueFromString
     NotImplemented_nid_no_patch(__func__);
 }
 
-int APS5_VABI _ZN3JSC22resetSuperSamplerStateEv() {
-    NotImplemented_nid_no_patch(__func__);
-}
+void APS5_VABI _ZN3JSC22resetSuperSamplerStateEv() {}
 
 int APS5_VABI _ZN3JSC7JSProxy9setTargetERNS_2VMEPNS_14JSGlobalObjectE() {
     NotImplemented_nid_no_patch(__func__);
@@ -354,8 +352,8 @@ int APS5_VABI _ZN3JSC12StringObjectC1ERNS_2VMEPNS_9StructureE() {
     NotImplemented_nid_no_patch(__func__);
 }
 
-int APS5_VABI _ZN3JSC14setNeverInlineENS_7JSValueE() {
-    NotImplemented_nid_no_patch(__func__);
+std::uint64_t APS5_VABI _ZN3JSC14setNeverInlineENS_7JSValueE(std::uint64_t) {
+    return 0xa;
 }
 
 int APS5_VABI _ZN3JSC16getFunctionRealmERNS_2VMEPNS_8JSObjectE() {
@@ -494,8 +492,8 @@ int APS5_VABI _ZN9Inspector26TimelineFrontendDispatcher13eventRecordedEN3WTF6Ref
     NotImplemented_nid_no_patch(__func__);
 }
 
-int APS5_VABI _ZN3JSC16setNeverOptimizeENS_7JSValueE() {
-    NotImplemented_nid_no_patch(__func__);
+std::uint64_t APS5_VABI _ZN3JSC16setNeverOptimizeENS_7JSValueE(std::uint64_t) {
+    return 0xa;
 }
 
 int APS5_VABI _ZN9Inspector25DebuggerBackendDispatcher13setBreakpointElON3WTF6RefPtrINS1_8JSONImpl6ObjectENS1_13DumbPtrTraitsIS4_EEEE() {
