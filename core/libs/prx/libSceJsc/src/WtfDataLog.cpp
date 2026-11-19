@@ -169,18 +169,29 @@ PrintStream* LockedFileData() {
     return reinterpret_cast<PrintStream*>(lockedFileData);
 }
 
-void SetDefaultDataFile() {
-    auto* file = new (fileData) FilePrintStream{FilePrintStreamVtable + 2, &_Stdout_nid_postfix, Jsc::WtfAbi::FilePrintStreamBorrow};
-    if (PrintStream* previous = dataFile.load(std::memory_order_acquire)) Slot<Flush>(previous, Jsc::WtfAbi::PrintStreamFlush)(previous);
-    auto* locked = new (lockedFileData) LockedPrintStream{};
-    locked->vtable = LockedPrintStreamVtable + 2;
-    locked->target = reinterpret_cast<PrintStream*>(file);
+void InstallLockedDataFile(FilePrintStream* file) {
+    PrintStream* previous = dataFile.load(std::memory_order_acquire);
+    if (previous) Slot<Flush>(previous, Jsc::WtfAbi::PrintStreamFlush)(previous);
+    auto* locked = reinterpret_cast<LockedPrintStream*>(lockedFileData);
+    if (previous != LockedFileData()) {
+        locked = new (lockedFileData) LockedPrintStream{};
+        locked->vtable = LockedPrintStreamVtable + 2;
+    }
+    PrintStream* replaced = nullptr;
+    {
+        std::lock_guard guard(locked->lock);
+        if (!file) file = new (fileData) FilePrintStream{FilePrintStreamVtable + 2, &_Stdout_nid_postfix, Jsc::WtfAbi::FilePrintStreamBorrow};
+        if (file->file != &_Stdout_nid_postfix) setvbuf_nid_postfix(file->file, nullptr, 2, 0);
+        replaced = locked->target;
+        locked->target = reinterpret_cast<PrintStream*>(file);
+    }
     dataFile.store(LockedFileData(), std::memory_order_release);
+    if (replaced && replaced != reinterpret_cast<PrintStream*>(fileData)) WtfFilePrintStreamDelete_nid_no_patch(reinterpret_cast<FilePrintStream*>(replaced));
 }
 
 void InitializeLogFileOnce() {
     if (dataFile.load(std::memory_order_acquire)) return;
-    SetDefaultDataFile();
+    InstallLockedDataFile(nullptr);
 }
 
 void RequireGuestCopy(bool copied, int savedErrno, const char* message) {
@@ -208,6 +219,10 @@ void WtfFilePrintStreamDestroy_nid_no_patch(Jsc::WtfAbi::FilePrintStream* stream
 void WtfFilePrintStreamDelete_nid_no_patch(Jsc::WtfAbi::FilePrintStream* stream) {
     WtfFilePrintStreamDestroy_nid_no_patch(stream);
     _ZdlPv_nid_postfix(stream);
+}
+
+void WtfSetLockedDataFile_nid_no_patch(Jsc::WtfAbi::FilePrintStream* file) {
+    InstallLockedDataFile(file);
 }
 
 void APS5_VABI _ZN3WTF11setDataFileEOSt10unique_ptrINS_11PrintStreamESt14default_deleteIS1_EE(Jsc::WtfAbi::PrintStreamPtr* file) {

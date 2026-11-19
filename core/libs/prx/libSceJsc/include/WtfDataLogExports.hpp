@@ -56,5 +56,6 @@ Jsc::WtfAbi::FilePrintStreamPtr* APS5_VABI _ZN3WTF15FilePrintStream4openEPKcS2_(
 Jsc::WtfAbi::PrintStream* WtfDataFile_nid_no_patch();
 void WtfFilePrintStreamDestroy_nid_no_patch(Jsc::WtfAbi::FilePrintStream* stream);
 void WtfFilePrintStreamDelete_nid_no_patch(Jsc::WtfAbi::FilePrintStream* stream);
+void WtfSetLockedDataFile_nid_no_patch(Jsc::WtfAbi::FilePrintStream* file);
 
 }

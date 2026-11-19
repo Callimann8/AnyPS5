@@ -467,6 +467,44 @@ void RunInstallNull() {
     Require(ThrowsLogicError([] { _ZN3WTF8dataFileEv(); }), "dataFile throws after a null stream replaced the default sink");
 }
 
+FilePrintStream* LockedTarget() {
+    PrintStream* stream = &_ZN3WTF8dataFileEv();
+    auto* target = reinterpret_cast<FilePrintStream*>(Entry<Begin>(stream, 4)(stream));
+    Entry<End>(stream, 5)(stream);
+    return target;
+}
+
+void RunPath(const std::filesystem::path& directory) {
+    _ZN3WTF11setDataFileEPKc(GuestPath("log-%pid.txt").c_str());
+    PrintStream* stream = &_ZN3WTF8dataFileEv();
+    Require(stream == WtfDataFile_nid_no_patch(), "setDataFile with a path keeps the locked stream");
+    FilePrintStream* target = LockedTarget();
+    Require(target->file != &_Stdout_nid_postfix && target->adoptionMode == 0, "setDataFile adopts the opened FILE");
+    const int descriptor = fileno_nid_postfix(target->file);
+    Print(stream, "to %s", "file");
+    std::filesystem::path logged;
+    for (const auto& entry : std::filesystem::directory_iterator(directory)) logged = entry.path();
+    const std::string name = logged.filename().string();
+    Require(name.size() > 8 && name.rfind("log-", 0) == 0 && name.substr(name.size() - 4) == ".txt", "%pid is replaced in the file name");
+    Require(name.substr(4, name.size() - 8).find_first_not_of("0123456789") == std::string::npos, "%pid becomes the process id");
+    Require(ReadAll(logged) == "to file", "the data file is unbuffered");
+
+    _ZN3WTF11setDataFileEPKc(GuestPath("plain.txt").c_str());
+    Print(&_ZN3WTF8dataFileEv(), "plain");
+    Require(ReadAll(directory / "plain.txt") == "plain", "a path without %pid is opened as given");
+    Require(ReadAll(logged) == "to file", "the previous file keeps its output");
+    Require(HostDescriptorClosed(descriptor, logged), "replacing the data file closes the previous adopted FILE");
+
+    _ZN3WTF11setDataFileEPKc(GuestPath("missing/file.txt").c_str());
+    target = LockedTarget();
+    Require(target->file == &_Stdout_nid_postfix && target->adoptionMode == 1, "an unopenable path falls back to borrowed stdout");
+
+    _ZN3WTF11setDataFileEPKc(nullptr);
+    target = LockedTarget();
+    Require(target->file == &_Stdout_nid_postfix && target->adoptionMode == 1, "a null path uses borrowed stdout");
+    Require(&_ZN3WTF8dataFileEv() == stream, "dataFile stays the locked stream");
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -480,6 +518,8 @@ int main(int argc, char** argv) {
         RunDefault(directory);
     } else if (mode == "install-first") {
         RunInstallFirst(directory);
+    } else if (mode == "path") {
+        RunPath(directory);
     } else if (mode == "install-null") {
         RunInstallNull();
     } else {

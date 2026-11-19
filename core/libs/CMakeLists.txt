@@ -273,9 +273,10 @@ if(BUILD_TESTING)
     add_test(NAME guest_wtf_data_log COMMAND guest_wtf_data_log_tests)
     add_test(NAME guest_wtf_data_log_install_first COMMAND guest_wtf_data_log_tests install-first)
     add_test(NAME guest_wtf_data_log_install_null COMMAND guest_wtf_data_log_tests install-null)
-    set_tests_properties(guest_wtf_data_log guest_wtf_data_log_install_first guest_wtf_data_log_install_null PROPERTIES TIMEOUT 20)
+    add_test(NAME guest_wtf_data_log_path COMMAND guest_wtf_data_log_tests path)
+    set_tests_properties(guest_wtf_data_log guest_wtf_data_log_install_first guest_wtf_data_log_install_null guest_wtf_data_log_path PROPERTIES TIMEOUT 20)
     if(WIN32)
-        set_tests_properties(guest_wtf_data_log guest_wtf_data_log_install_first guest_wtf_data_log_install_null PROPERTIES ENVIRONMENT_MODIFICATION
+        set_tests_properties(guest_wtf_data_log guest_wtf_data_log_install_first guest_wtf_data_log_install_null guest_wtf_data_log_path PROPERTIES ENVIRONMENT_MODIFICATION
             "PATH=path_list_prepend:$<TARGET_FILE_DIR:libSceNKWebKit>;PATH=path_list_prepend:$<TARGET_FILE_DIR:libSceJsc>")
     endif()
 endif()
