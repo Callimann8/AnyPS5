@@ -115,11 +115,41 @@ static void WebVTTCueFields() {
     Require(ThrowsInvalidArgument([] { _ZNK7WebCore12ISOWebVTTCue7cueTextEv(nullptr); }));
 }
 
+static bool JsonIs(const WebVTTCue& cue, const char* expected) {
+    String json = _ZNK7WebCore12ISOWebVTTCue12toJSONStringEv(&cue);
+    return json.impl && (json.impl->hashAndFlags & 4) && json.impl->length == std::strlen(expected)
+        && std::memcmp(json.impl->data, expected, json.impl->length) == 0;
+}
+
+static void WebVTTCueJSON() {
+    WebVTTCue cue{};
+    cue.presentationTime = NKWebKit::MediaAbi::MediaTime(1500, 1000, 1);
+    cue.duration = NKWebKit::MediaAbi::MediaTime(250, 1000, 1);
+    cue.sourceID = Latin1("source");
+    cue.identifier = Latin1("cue \"1\"\\");
+    cue.originalStartTime = Latin1("00:00:01.500");
+    cue.settings = Latin1("align:start");
+    cue.cueText = Latin1("Hello");
+    Require(JsonIs(cue, "{\"sourceId\":\"source\",\"id\":\"cue%20%221%22%5C\",\"originalStartTime\":\"00%3A00%3A01.500\",\"settings\":\"align%3Astart\",\"presentationTime\":1.5,\"duration\":0.25}"));
+    const char16_t wide[] = u"\u00e9t\u00e9";
+    cue.identifier = _ZN3WTF10StringImpl6createEPKDsj(wide, 3);
+    cue.sourceID = String();
+    cue.originalStartTime = Latin1("");
+    cue.settings = String();
+    cue.presentationTime = NKWebKit::MediaAbi::MediaTime(-3, 1, 1);
+    cue.duration = NKWebKit::MediaAbi::MediaTime(0, 1, 1);
+    Require(JsonIs(cue, "{\"sourceId\":\"\",\"id\":\"%C3%A9t%C3%A9\",\"originalStartTime\":\"\",\"settings\":\"\",\"presentationTime\":-3,\"duration\":0}"));
+    cue.duration = NKWebKit::MediaAbi::MediaTime(0, 1, 1 | 4);
+    Require(JsonIs(cue, "{\"sourceId\":\"\",\"id\":\"%C3%A9t%C3%A9\",\"originalStartTime\":\"\",\"settings\":\"\",\"presentationTime\":-3,\"duration\":null}"));
+    Require(ThrowsInvalidArgument([] { _ZNK7WebCore12ISOWebVTTCue12toJSONStringEv(nullptr); }));
+}
+
 int main() {
     BoxAndFullBox();
     TrackEncryptionBoxFields();
     ProtectionSystemSpecificHeaderFields();
     WebVTTCueFields();
+    WebVTTCueJSON();
     std::puts("IsoBoxAccessors passed");
     return 0;
 }
